@@ -5,39 +5,40 @@ import irc
 import threading
 
 def init():
-    global prefix
-    global nickname
-    global channel
+    global PREFIX
+    global USERNAME
+    global CHANNEL
+    global twitch
 
     with open("files/secrets.json", "r") as filp:
         secrets = json.load(filp)
 
     print("Opened secrets")
 
-    server = 'irc.chat.twitch.tv'
-    port = 6667
-    nickname = 'majoryoshibot'
-    token = secrets["oauth"]
-    channel = '#' + 'majoryoshi' #secrets['channel']
-    prefix = secrets['prefix']
+    # Define login information
+    SERVER = 'irc.chat.twitch.tv'
+    PORT = 6667
+    USERNAME = 'majoryoshibot'
+    TOKEN = secrets["oauth"]
+    CHANNEL = '#' + 'majoryoshi' #secrets['channel']
+    PREFIX = secrets['prefix']
 
-    sock = socket.socket()
-    sock.connect((server, port))
+    # Connect with twitch
+    twitch = socket.socket()
+    twitch.connect((SERVER, PORT))
     print("Connected to twitch")
 
-    sock.send(f'CAP REQ :twitch.tv/tags twitch.tv/commands\n'.encode('utf-8'))
+    # Authenticate with twitch
+    twitch.send(f'CAP REQ :twitch.tv/tags twitch.tv/commands\n'.encode('utf-8'))
     print("Retrieved tags")
-
-    sock.send(f'PASS {token}\n'.encode('utf-8'))
+    twitch.send(f'NICK {USERNAME}\n'.encode('utf-8'))
+    print(f"Username set to {USERNAME}")
+    twitch.send(f'PASS {token}\n'.encode('utf-8'))
     print("Logged in with the oauth token")
-
-    sock.send(f'NICK {nickname}\n'.encode('utf-8'))
-    print(f"Nickname set to {nickname}")
-
-    sock.send(f'JOIN {channel}\n'.encode('utf-8'))
+    twitch.send(f'JOIN {channel}\n'.encode('utf-8'))
     print(f"Joined channel {channel}")
 
-    return sock
+    return twitch
 
 def parseMsg(ircMsg):
     sender = ""
@@ -53,7 +54,7 @@ def parseMsg(ircMsg):
         else:
             sender = sender + char
 
-    if sender == nickname:
+    if sender == USERNAME:
         return
 
     # Check to make sure the split irc output is exactly a length of 3
@@ -78,19 +79,18 @@ def privs(chatMsg):
     chatMsg[0] = chatMsg[0].split(';')
 
 
-
 def sendMsg(msg, msgType="PRIVMSG"):
     msgType = msgType.upper()
 
     if msgType == "PONG":
-        formattedMsg = f'{msgType} :tmi.twitch.tv'
+        formattedMsg = f'{msgType} :tmi.twitch.tv\n'
     else:
         formattedMsg = f'{msgType} {channel} :{msg}\n'
 
     if verbose:
         print("Sending " + formattedMsg)
 
-    server.send(formattedMsg.encode('utf-8'))
+    twitch.send(formattedMsg.encode('utf-8'))
 
 def readCommand(chatMsg):
     # Open the commands database
@@ -114,9 +114,6 @@ def readCommand(chatMsg):
             if verbose:
                 print(cmd + " has no aliases")
 
-
-
-
     # Check if requested command is in the database
     # First, remove the prefix and the newline at the end
     if requestedCmd in database["commands"]:
@@ -136,17 +133,18 @@ def readCommand(chatMsg):
 def running():
     try:
         while True:
-            resp = server.recv(2048).decode('utf-8')
+            resp = twitch.recv(2048).decode('utf-8')
 
             if verbose:
                 print(resp)
 
+            # Handle twitch's keep alives
             if resp == 'PING :tmi.twitch.tv':
-                server.send('PONG :' + resp)
-            elif resp != "":
-                chatMsg = parseMsg(resp)
-                if chatMsg != None and chatMsg[1][0] == prefix:
-                    readCommand(chatMsg)
+                twitch.send('PONG :' + resp)
+
+            # Run if a command was requested
+            if chatMsg != None and chatMsg[1][0] == prefix:
+                readCommand(chatMsg)
 
     # Catch all exceptions, if you constantly connect and disconnect Twitch thinks your DDoSing them.
     except Exception as e:
@@ -165,10 +163,9 @@ def running():
             print("Exiting...")
 
 def main():
-    global server
-    server = init()
+    init()
     running()
-    server.close()
+    twitch.close()
 
 if __name__ == "__main__":
     global verbose
@@ -178,7 +175,7 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("^C received, exiting.")
         print("Cleaning up...")
-        server.close()
+        twitch.close()
 
         print("Thanks for using my chatbot!")
         print("Leave any feedback on the github page, https://github.com/TotallyMonica/twitch-admin")
