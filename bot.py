@@ -28,4 +28,4 @@ with open("files/secrets.json", "r") as file:
 
     while True:
         resp = sock.recv(2048).decode('utf-8')
-        resp
+        print(resp)
