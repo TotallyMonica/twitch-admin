@@ -19,7 +19,7 @@ def init():
     SERVER = 'irc.chat.twitch.tv'
     PORT = 6667
     USERNAME = 'majoryoshibot'
-    TOKEN = secrets["oauth"]
+    TOKEN = secrets['oauth']
     CHANNEL = '#' + 'majoryoshi' #secrets['channel']
     PREFIX = secrets['prefix']
 
@@ -29,16 +29,14 @@ def init():
     print("Connected to twitch")
 
     # Authenticate with twitch
+    twitch.send(f'PASS {TOKEN}\n'.encode('utf-8'))
+    print("Logged in with the oauth token")
     twitch.send(f'CAP REQ :twitch.tv/tags twitch.tv/commands\n'.encode('utf-8'))
     print("Retrieved tags")
     twitch.send(f'NICK {USERNAME}\n'.encode('utf-8'))
     print(f"Username set to {USERNAME}")
-    twitch.send(f'PASS {token}\n'.encode('utf-8'))
-    print("Logged in with the oauth token")
-    twitch.send(f'JOIN {channel}\n'.encode('utf-8'))
-    print(f"Joined channel {channel}")
-
-    return twitch
+    twitch.send(f'JOIN {CHANNEL}\n'.encode('utf-8'))
+    print(f"Joined channel {CHANNEL}")
 
 def parseMsg(ircMsg):
     sender = ""
@@ -131,36 +129,40 @@ def readCommand(chatMsg):
         print(f"{chatMsg[0]} sent an invalid command")
 
 def running():
-    try:
-        while True:
-            resp = twitch.recv(2048).decode('utf-8')
+    # try:
+    while True:
+        resp = twitch.recv(2048).decode('utf-8')
 
+        if verbose:
+            print(resp)
+
+        if resp != "":
             if verbose:
                 print(resp)
-
+            chatMsg = parseMsg(resp)
             # Handle twitch's keep alives
             if resp == 'PING :tmi.twitch.tv':
-                twitch.send('PONG :' + resp)
+                sendMsg(None, "PONG")
 
             # Run if a command was requested
-            if chatMsg != None and chatMsg[1][0] == prefix:
+            elif chatMsg != None and chatMsg[1][0] == PREFIX:
                 readCommand(chatMsg)
 
     # Catch all exceptions, if you constantly connect and disconnect Twitch thinks your DDoSing them.
-    except Exception as e:
-        print("An unexpected error occurred.")
-        print("Error:")
-        print(e)
-        print("Would you like to keep running?")
-        userInput = input("(y/n): ")
-        if userInput.lower() == 'y':
-            print('Attempting to rerun. If this happens again you might want to check your commands json.')
-            running()
-        elif userInput.lower() == 'n':
-            print("Exiting...")
-        else:
-            print("Invalid input detected. Defaulting to no.")
-            print("Exiting...")
+    # except Exception as e:
+        # print("An unexpected error occurred.")
+        # print("Error:")
+        # print(e)
+        # print("Would you like to keep running?")
+        # userInput = input("(y/n): ")
+        # if userInput.lower() == 'y':
+        #     print('Attempting to rerun. If this happens again you might want to check your commands json.')
+        #     running()
+        # elif userInput.lower() == 'n':
+        #     print("Exiting...")
+        # else:
+        #     print("Invalid input detected. Defaulting to no.")
+        #     print("Exiting...")
 
 def main():
     init()
