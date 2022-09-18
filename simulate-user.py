@@ -3,7 +3,7 @@
 # Simulate a message here
 username = "chatter123"
 stream = "majoryoshi"
-message = "toby fox: imma do what people call a pro gamer move"
+message = "toby fox: imma do: what people call :a :pro: gamer move"
 ircOutput = ":" + username + "!" + username + "@" + username + ".tmi.twitch.tv PRIVMSG #" + stream + ":" + message
 
 # Split that simulated message to be parsed, then print output
@@ -38,7 +38,10 @@ if len(splitIrc) == 3:
 elif len(splitIrc) > 3:
 	for part in splitIrc:
 		if not part == splitIrc[0] and not part == splitIrc[1]:
-			chatMsg = chatMsg + part
+			if part == splitIrc[-1]:
+				chatMsg = chatMsg + part
+			else:
+				chatMsg = chatMsg + part + ":"
 
 # Print the identified chatter and the message
 print(f"Chatter identified: {sender}")
