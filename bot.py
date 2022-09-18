@@ -3,21 +3,14 @@ import socket
 import json
 import irc
 
-with open("files/secrets.json", "r") as file:
-    secrets = json.load(file)
+def init():
+    secrets = json.load(open("files/secrets.json", "r"))
 
     server = 'irc.chat.twitch.tv'
     port = 6667
     nickname = 'majoryoshibot'
     token = secrets["oauth"]
-    # channel = '#majoryoshi'
-    print("What twich channel would you like to join?")
-    channel = input()
-
-    if channel[0] != "#":
-        channel = "#" + channel
-
-    readbuffer= ""
+    channel = '#' + secrets['channel']
 
     sock = socket.socket()
     sock.connect((server, port))
@@ -32,6 +25,11 @@ with open("files/secrets.json", "r") as file:
     sock.send(f'JOIN {channel}\n'.encode('utf-8'))
     print(f"Joined channel {channel}")
 
-    while True:
-        resp = sock.recv(2048).decode('utf-8')
-        print(resp)
+    return sock
+
+def running(server):
+    commands = json.load(open("files/commands.json"), "r")
+    
+
+def main():
+    server = init()
