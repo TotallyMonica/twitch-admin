@@ -21,12 +21,11 @@ with open("files/secrets.json", "r") as file:
     print("logged in")
 
     sock.send(f'NICK {nickname}\n'.encode('utf-8'))
-    print("Nickname set")
+    print(f"Nickname set to {nickname}")
 
     sock.send(f'JOIN {channel}\n'.encode('utf-8'))
-    print("Joined channel")
+    print(f"Joined channel {channel}")
 
-    resp = sock.recv(2048).decode('utf-8')
-    resp
-
-    sock.close
+    while True:
+        resp = sock.recv(2048).decode('utf-8')
+        resp
