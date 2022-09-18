@@ -14,7 +14,7 @@ with open("files/secrets.json", "r") as file:
     print("What twich channel would you like to join?")
     channel = input()
 
-    if channel[0] != "#"
+    if channel[0] != "#":
         channel = "#" + channel
 
     readbuffer= ""
