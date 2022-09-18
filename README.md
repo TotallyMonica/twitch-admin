@@ -4,8 +4,10 @@ An administrative control panel written in Python
 -----------------------------
 
 ## To do - Chatbot
+ * Keep alive
  * Process who sent what
  	* `simulate-user.py` is the current testing ground for this
+ 	* Manage badges
  * ~~Add commands~~ Done on 9/18/22
  * Import commands from Json/CSV
  * Join different channel

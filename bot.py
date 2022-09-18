@@ -2,6 +2,7 @@
 import socket
 import json
 import irc
+import threading
 
 def init():
     global prefix
@@ -17,15 +18,18 @@ def init():
     port = 6667
     nickname = 'majoryoshibot'
     token = secrets["oauth"]
-    channel = '#' + secrets['channel']
+    channel = '#' + 'majoryoshi' #secrets['channel']
     prefix = secrets['prefix']
 
     sock = socket.socket()
     sock.connect((server, port))
-    print("connected")
+    print("Connected to twitch")
+
+    sock.send(f'CAP REQ :twitch.tv/tags twitch.tv/commands\n'.encode('utf-8'))
+    print("Retrieved tags")
 
     sock.send(f'PASS {token}\n'.encode('utf-8'))
-    print("logged in")
+    print("Logged in with the oauth token")
 
     sock.send(f'NICK {nickname}\n'.encode('utf-8'))
     print(f"Nickname set to {nickname}")
@@ -69,41 +73,77 @@ def parseMsg(ircMsg):
 
     return [sender, chatMsg]
 
-def sendMsg(msg):
-    formattedMsg = f'PRIVMSG {channel} :{msg}\n'
-    print("Sending " + formattedMsg)
+def privs(chatMsg):
+    badges = ["broadcaster", "admin", "bits", "moderator", "subscriber", "staff", "turbo"]
+    chatMsg[0] = chatMsg[0].split(';')
+
+
+
+def sendMsg(msg, msgType="PRIVMSG"):
+    msgType = msgType.upper()
+
+    if msgType == "PONG":
+        formattedMsg = f'{msgType} :tmi.twitch.tv'
+    else:
+        formattedMsg = f'{msgType} {channel} :{msg}\n'
+
+    if verbose:
+        print("Sending " + formattedMsg)
+
     server.send(formattedMsg.encode('utf-8'))
 
 def readCommand(chatMsg):
-    # Open the commands database.
+    # Open the commands database
     # With its current configuration the bot can still be running and an updated database can be provided
     with open('files/commands.json', 'r') as filp:
-        commands = json.load(filp)
+        database = json.load(filp)
 
     # Make the chat message provided friendly
     requestedCmd = chatMsg[1][1:-1].lower()
 
-    # Check if requested command is in the database.
+    # Check to see if an alias was used
+    for cmd in database['commands']:
+        try:
+            for alt in database['commands'][cmd]['alias']:
+                if requestedCmd == alt:
+                    if verbose: 
+                        print(f"{requestedCmd} matches alias {alt} for {cmd}")
+                    requestedCmd = cmd
+
+        except KeyError:
+            if verbose:
+                print(cmd + " has no aliases")
+
+
+
+
+    # Check if requested command is in the database
     # First, remove the prefix and the newline at the end
-    if requestedCmd in commands["commands"]:
+    if requestedCmd in database["commands"]:
         chatCmd = requestedCmd
-        output = commands["commands"][chatCmd]['output']
+        output = database["commands"][chatCmd]['output']
 
-        print(f"{chatMsg[0]} sent {chatCmd}")
-        msg = commands['commands'][requestedCmd]['output']
+        msg = database['commands'][requestedCmd]['output']
 
-        print(msg)
-
+        if verbose:
+            print(f"{chatMsg[0]} sent {chatCmd}")
+        
         sendMsg(msg)
-    else:
-        print(f"Invalid command received")
+
+    elif verbose:
+        print(f"{chatMsg[0]} sent an invalid command")
 
 def running():
     try:
         while True:
             resp = server.recv(2048).decode('utf-8')
 
-            if resp != "":
+            if verbose:
+                print(resp)
+
+            if resp == 'PING :tmi.twitch.tv':
+                server.send('PONG :' + resp)
+            elif resp != "":
                 chatMsg = parseMsg(resp)
                 if chatMsg != None and chatMsg[1][0] == prefix:
                     readCommand(chatMsg)
@@ -131,4 +171,14 @@ def main():
     server.close()
 
 if __name__ == "__main__":
-    main()
+    global verbose
+    verbose = True
+    try: 
+        main()
+    except KeyboardInterrupt:
+        print("^C received, exiting.")
+        print("Cleaning up...")
+        server.close()
+
+        print("Thanks for using my chatbot!")
+        print("Leave any feedback on the github page, https://github.com/TotallyMonica/twitch-admin")

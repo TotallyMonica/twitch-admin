@@ -1,0 +1,31 @@
+{
+	"help": {
+		"short": "-h",
+		"long": "--help",
+		"desc": "Prints the help for the program",
+		"required": false
+	},
+	"version": {
+		"short": "-v",
+		"long": "--version",
+		"desc": "Prints the version for the program",
+		"required": false
+	},
+	"secrets": {
+		"short": "-s",
+		"long": "--secrets",
+		"desc": "Point to a JSON formatted secrets file",
+		"required": false
+	},
+	"commands": {
+		"short": "-C",
+		"long": "--commands",
+		"desc": "Point to a JSON formatted commands file",
+		"required": false
+	},
+	"channel": {
+		"short": "-c",
+		"long": "--channel",
+		"desc": "What channel to join",
+		"required": false
+}
