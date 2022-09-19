@@ -250,7 +250,7 @@ function parseTags(tags) {
                                     // The key is the badge's name (e.g., subscriber).
                     let badges = tagValue.split(','); 
                     badges.forEach(pair => {
-                        let badgeParts = pair.split('/');
+                        let badgeParts = pair.exsplit('/');
                         dict[badgeParts[0]] = badgeParts[1];
                     })
                     dictParsedTags[parsedTag[0]] = dict;
