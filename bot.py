@@ -3,6 +3,9 @@ import socket
 import json
 import irc
 import threading
+import time
+import sys
+import os
 import parse.message as message
 
 def init():
@@ -45,7 +48,7 @@ def sendMsg(msg, msgType="PRIVMSG"):
     if msgType == "PONG":
         formattedMsg = f'{msgType} :tmi.twitch.tv\n'
     else:
-        formattedMsg = f'{msgType} {channel} :{msg}\n'
+        formattedMsg = f'{msgType} {CHANNEL} :{msg}\n'
 
     if verbose:
         print("Sending " + formattedMsg)
@@ -53,50 +56,47 @@ def sendMsg(msg, msgType="PRIVMSG"):
     twitch.send(formattedMsg.encode('utf-8'))
 
 def readCommand(chatMsg):
+    requestedCmd = ""
+    requestedArgs = []
     # Open the commands database
     # With its current configuration the bot can still be running and an updated database can be provided
     with open('files/commands.json', 'r') as filp:
         database = json.load(filp)
 
     # Make the chat message provided friendly
-    requestedCmd = chatMsg['botCommand'].lower().lstrip()
+    try: 
+        requestedCmd = chatMsg['botCommand']
+    except KeyError:
+        return None
+    
+    try:
+        requestedArgs = chatMsg['botCommandParams'].split(" ")
+    except KeyError:
+        requestedArgs = []
 
-    while "\n" in requestedCmd or "\b" in requestedCmd:
-        print(chatMsg)
-        print("Remove another char?")
-        userInput = input("y/n: ")
-        if userInput.lower() == 'y':
-            requestedCmd = requestedCmd[0:-1]
-        elif userInput.lower() == 'n':
-            break
+    # # Check to see if an alias was used
+    # for cmd in database:
+    #     try:
+    #         for alt in database[cmd]['alias']:
+    #             if requestedCmd == alt:
+    #                 if verbose: 
+    #                     print(f"{requestedCmd} matches alias {alt} for {cmd}")
+    #                 requestedCmd = cmd
 
-    if requestedCmd[-1] == "\n":
-        print(b'{requestCmd}')
-
-
-    # Check to see if an alias was used
-    for cmd in database['commands']:
-        try:
-            for alt in database['commands'][cmd]['alias']:
-                if requestedCmd == alt:
-                    if verbose: 
-                        print(f"{requestedCmd} matches alias {alt} for {cmd}")
-                    requestedCmd = cmd
-
-        except KeyError:
-            if verbose:
-                print(cmd + " has no aliases")
+    #     except KeyError:
+    #         if verbose:
+    #             print(cmd + " has no aliases")
 
     # Check if requested command is in the database
     # First, remove the prefix and the newline at the end
-    if requestedCmd in database["commands"]:
+    if requestedCmd in database:
         chatCmd = requestedCmd
-        output = database["commands"][chatCmd]['output']
+        output = database[chatCmd]['output']
 
-        msg = database['commands'][requestedCmd]['output']
+        msg = database[requestedCmd]['output']
 
         if verbose:
-            print(f"{chatMsg[0]} sent {chatCmd}")
+            print(f"{chatCmd} was sent")
         
         sendMsg(msg)
 
@@ -112,11 +112,12 @@ def running():
             print(resp)
 
         if resp != "":
+            chatMsg = message.parseRawMsg(resp)
+
             if verbose:
                 print(resp)
+                print(chatMsg)
 
-            chatMsg = message.parseRawMsg(resp)
-            print(chatMsg)
             # Handle twitch's keep alives
             if resp == 'PING':
                 twitch.send('PONG ' + parsedMessage)
@@ -141,10 +142,15 @@ def running():
     #         print("Invalid input detected. Defaulting to no.")
     #         print("Exiting...")
 
-def main():
-    init()
-    running()
-    twitch.close()
+def main(waitLength=1):
+    try:
+        init()
+        running()
+        twitch.close()
+    except ConnectionResetError:
+        print(f"Connection got reset, retrying in {waitLength} seconds...")
+        time.sleep(waitLength)
+        main(waitLength * 2)
 
 if __name__ == "__main__":
     global verbose

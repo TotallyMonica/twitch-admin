@@ -38,10 +38,21 @@ def parseRawMsg(rawMsg):
         ptr = endPointer + 1
         rawParams = rawMsg[ptr:]
 
-    parsedMessage["command"] = parseCommand(rawCommand)
+    print("\nRaw values:")
+    print(f"\tTags: {rawTags}")
+    print(f"\tSource: {rawSource}")
+    print(f"\tCommand: {rawCommand}")
+    print(f"\tParams: {rawParams} \n")
+
+    if rawCommand == None:
+        return None
+    
+    else:
+        parsedMessage["command"] = parseCommand(rawCommand)
 
     if parsedMessage["command"] == None:
         return None
+
     else:
         if rawTags != None:
             parsedMessage["tags"] = parseTags(rawTags)
@@ -124,58 +135,73 @@ def parseTags(rawTags):
     return dictParsedTags
 
 def parseCommand(rawCmd):
+    # Split rawCmd at every space, set the output to cmdParts
     cmdParts = rawCmd.split(' ')
     parsedCmd = None
 
+    # If the IRC command was PRIVMSG, return the command and the channel from cmdParts
     if cmdParts[0] == "PRIVMSG":
         parsedCmd = {
             "command": cmdParts[0],
             "channel": cmdParts[1]
         }
 
+    # If the IRC command was PING, return the ping.
     elif cmdParts[0] == "PING":
         parsedCmd = {
             "command": cmdParts[0]
         }
 
+    # If the IRC command was CAP, return the command and if cmdParts[2] is an ACK
     elif cmdParts[0] == "CAP":
         parsedCmd = {
             "command": cmdParts[0],
             "isCapRequestEnabled": cmdParts[2] == 'ACK'
         }
 
+    # If the IRC command was GLOBALUSERSTATE, return the command
     elif cmdParts[0] == "GLOBALUSERSTATE":
         parsedCmd = {
             "command": cmdParts[0] 
         }
 
+    # If the IRC command was ROOMSTATE, return the command and the channel from cmdParts
     elif cmdParts[0] == "ROOMSTATE":
         parsedCmd = {
         "command": cmdParts[0],
         "channel": cmdParts[1]
         }
 
+    # If the IRC command was RECONNECT, print a warning to the output and return the command
     elif cmdParts[0] == "RECONNECT":
         print("The IRC server is going down momentarily.")
         parsedCmd = {
             "command": cmdParts[0]
         }
 
+    # If the IRC command was 421, print a heads up of the unsupported command
     elif cmdParts[0] == "421":
         print("Unsupported IRC command")
 
+    # If the IRC command was 001, return the command and the channel from cmdParts
     elif cmdParts[0] == "001":
         parsedCmd = {
             "command": cmdParts[0], 
             "channel": cmdParts[1]
         }
 
+    # If the IRC command was 376, print the int value of the command
     elif cmdParts[0] == "376": 
         print(int(cmdParts[0]))
 
-    elif cmdParts[0] == "JOIN" or cmdParts[0] == "PART" or cmdParts[0] == "NOTICE" or cmdParts[0] == "CLEARCHAT" or cmdParts[0] == "HOSTTARGET" or cmdParts[0] == "USERSTATE" or cmdParts[0] == "002" or cmdParts[0] == "003" or cmdParts[0] == "004" or cmdParts[0] == "353"   or cmdParts[0] == "366" or cmdParts[0] == "372" or cmdParts[0] == "375":
+    # If the command is any of the following, don't bother responding
+    # JOIN, PART, NOTICE, CLEARCHAT, HOSTTARGET, USERSTATE, 002, 003, 004, 353, 366, 372, 375
+    elif cmdParts[0] == "JOIN" or cmdParts[0] == "PART" or cmdParts[0] == "NOTICE" or cmdParts[0] == "CLEARCHAT" \
+     or cmdParts[0] == "HOSTTARGET" or cmdParts[0] == "USERSTATE" or cmdParts[0] == "002" or cmdParts[0] == "003" or cmdParts[0] == "004" \
+     or cmdParts[0] == "353"   or cmdParts[0] == "366" or cmdParts[0] == "372" or cmdParts[0] == "375":
         print(f"No need to respond to {cmdParts[0]}")
 
+    # It didn't meet any of the other requirements, so print a notice and the command.
     else:
         print(f"Unexpected command: {cmdParts[0]}")
 
@@ -200,12 +226,24 @@ def parseSource(rawSrc):
         return output
 
 def parseParams(rawParams, cmd):
+    print("\nparseParams()")
     ptr = 0
-    cmdParts = rawParams[ptr + 1:].lstrip()
+    if "\n" or "\b" in rawParams:
+        rawParams = rawParams[0:-2]
+
+    cmdParts = rawParams[(ptr + 1):].lstrip()
+
     try:
         paramsPtr = cmdParts.index(' ')
-        cmd.update({"botCommand": cmd[0:paramsPtr].lstrip(), "botCommandParams": cmd[paramsPtr:].lstrip()})
+        cmd.update({
+            "botCommand": cmdParts[0:paramsPtr],
+            "botCommandParams": cmdParts[paramsPtr:].lstrip(),
+            "isCommand": rawParams[0] == '!'
+            })
     except ValueError:
-        cmd.update({"botCommand": cmdParts[0:].lstrip()})
+        cmd.update({
+            "botCommand": cmdParts[0:],
+            "isCommand": rawParams[0] == '!'
+            })
 
     return(cmd)
