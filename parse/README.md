@@ -1,4 +1,6 @@
 # Parsing the message
+## Twitch's documentation was nonexistent so hopefully this provides better documentation
+----------------------------------------
 ## Tag Extraction
 1. Check if there is an @ at the beginning of the message
 2. Look for the first space
