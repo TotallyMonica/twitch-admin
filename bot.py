@@ -59,7 +59,20 @@ def readCommand(chatMsg):
         database = json.load(filp)
 
     # Make the chat message provided friendly
-    requestedCmd = chatMsg[1][1:-1].lower()
+    requestedCmd = chatMsg['botCommand'].lower().lstrip()
+
+    while "\n" in requestedCmd or "\b" in requestedCmd:
+        print(chatMsg)
+        print("Remove another char?")
+        userInput = input("y/n: ")
+        if userInput.lower() == 'y':
+            requestedCmd = requestedCmd[0:-1]
+        elif userInput.lower() == 'n':
+            break
+
+    if requestedCmd[-1] == "\n":
+        print(b'{requestCmd}')
+
 
     # Check to see if an alias was used
     for cmd in database['commands']:
@@ -88,7 +101,7 @@ def readCommand(chatMsg):
         sendMsg(msg)
 
     elif verbose:
-        print(f"{chatMsg[0]} sent an invalid command")
+        print(f"Received invalid command {chatMsg['botCommand']}")
 
 def running():
     # try:
@@ -103,13 +116,14 @@ def running():
                 print(resp)
 
             chatMsg = message.parseRawMsg(resp)
+            print(chatMsg)
             # Handle twitch's keep alives
             if resp == 'PING':
                 twitch.send('PONG ' + parsedMessage)
 
             # Run if a command was requested
-            elif chatMsg != None and chatMsg[1][0] == PREFIX:
-                readCommand(chatMsg)
+            elif chatMsg != None and chatMsg['command']['command'] == "PRIVMSG":
+                readCommand(chatMsg['command'])
 
     # Catch all exceptions, if you constantly connect and disconnect Twitch thinks your DDoSing them.
     # except Exception as e:

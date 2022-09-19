@@ -44,12 +44,14 @@ def parseRawMsg(rawMsg):
         return None
     else:
         if rawTags != None:
-            parsedMessage["tags"] = paseTags(rawTags)
+            parsedMessage["tags"] = parseTags(rawTags)
 
         parsedMessage["source"] = parseSource(rawSource)
 
         if rawParams != None and rawParams[0] == "!":
-            parsedMessage["command"] = parseParameters(rawParams, parsedMessage["command"])
+            parsedMessage["command"] = parseParams(rawParams, parsedMessage["command"])
+
+    return parsedMessage
 
 def parseTags(rawTags):
     ignoredTags = ['client-nonce', 'flags']
@@ -166,7 +168,7 @@ def parseCommand(rawCmd):
         parsedCmd = {
             "command": cmdParts[0], 
             "channel": cmdParts[1]
-        },
+        }
 
     elif cmdParts[0] == "376": 
         print(int(cmdParts[0]))
@@ -201,7 +203,9 @@ def parseParams(rawParams, cmd):
     ptr = 0
     cmdParts = rawParams[ptr + 1:].lstrip()
     try:
-        paramsPtr = cmd.index(' ')
-        cmd.update({"botCommand": cmd[0:paramsPtr], "botCommandParams": cmd[paramsPtr:].lstrip()})
+        paramsPtr = cmdParts.index(' ')
+        cmd.update({"botCommand": cmd[0:paramsPtr].lstrip(), "botCommandParams": cmd[paramsPtr:].lstrip()})
     except ValueError:
-        cmd.update({"botCommand": cmdParts[0:]})
+        cmd.update({"botCommand": cmdParts[0:].lstrip()})
+
+    return(cmd)
