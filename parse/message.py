@@ -38,11 +38,11 @@ def parseRawMsg(rawMsg):
         ptr = endPointer + 1
         rawParams = rawMsg[ptr:]
 
-    print("\nRaw values:")
-    print(f"\tTags: {rawTags}")
-    print(f"\tSource: {rawSource}")
-    print(f"\tCommand: {rawCommand}")
-    print(f"\tParams: {rawParams} \n")
+#    print("\nRaw values:")
+#    print(f"\tTags: {rawTags}")
+#    print(f"\tSource: {rawSource}")
+#    print(f"\tCommand: {rawCommand}")
+#    print(f"\tParams: {rawParams} \n")
 
     if rawCommand == None:
         return None
@@ -226,7 +226,7 @@ def parseSource(rawSrc):
         return output
 
 def parseParams(rawParams, cmd):
-    print("\nparseParams()")
+#    print("\nparseParams()")
     ptr = 0
     if "\n" or "\b" in rawParams:
         rawParams = rawParams[0:-2]

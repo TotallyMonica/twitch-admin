@@ -1,0 +1,12 @@
+{
+    "version": {
+        "shorthand": "-v",
+        "longhand": "--version",
+        "value": "Unset value"
+    },
+    "help": {
+        "shorthand": "-?",
+        "longhand": "--help",
+        "value": "Unset value"
+    }
+}

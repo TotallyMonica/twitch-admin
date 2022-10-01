@@ -6,7 +6,10 @@ import threading
 import time
 import sys
 import os
+from datetime import datetime
+
 import parse.message as message
+#import parse.args as argparse
 
 def init():
     global PREFIX
@@ -24,7 +27,7 @@ def init():
     PORT = 6667
     USERNAME = 'majoryoshibot'
     TOKEN = secrets['oauth']
-    CHANNEL = '#' + 'majoryoshi' #secrets['channel']
+    CHANNEL = '#' + 'nico' #secrets['channel']
     PREFIX = secrets['prefix']
 
     # Connect with twitch
@@ -47,8 +50,8 @@ def sendMsg(msg, msgType="PRIVMSG"):
 
     if msgType == "PONG":
         formattedMsg = f'{msgType} :tmi.twitch.tv\n'
-    else:
-        formattedMsg = f'{msgType} {CHANNEL} :{msg}\n'
+    # else:
+    #     formattedMsg = f'{msgType} {CHANNEL} :{msg}\n'
 
     if verbose:
         print("Sending " + formattedMsg)
@@ -74,18 +77,18 @@ def readCommand(chatMsg):
     except KeyError:
         requestedArgs = []
 
-    # # Check to see if an alias was used
-    # for cmd in database:
-    #     try:
-    #         for alt in database[cmd]['alias']:
-    #             if requestedCmd == alt:
-    #                 if verbose: 
-    #                     print(f"{requestedCmd} matches alias {alt} for {cmd}")
-    #                 requestedCmd = cmd
+    # Check to see if an alias was used
+    for cmd in database:
+        try:
+            for alt in database[cmd]['alias']:
+                if requestedCmd == alt:
+                    if verbose: 
+                        print(f"{requestedCmd} matches alias {alt} for {cmd}")
+                    requestedCmd = cmd
 
-    #     except KeyError:
-    #         if verbose:
-    #             print(cmd + " has no aliases")
+        except KeyError:
+            if verbose:
+                print(cmd + " has no aliases")
 
     # Check if requested command is in the database
     # First, remove the prefix and the newline at the end
@@ -97,50 +100,57 @@ def readCommand(chatMsg):
 
         if verbose:
             print(f"{chatCmd} was sent")
-        
+
         sendMsg(msg)
 
     elif verbose:
         print(f"Received invalid command {chatMsg['botCommand']}")
 
 def running():
-    # try:
-    while True:
-        resp = twitch.recv(2048).decode('utf-8')
 
-        if verbose:
-            print(resp)
+    if logging:
+        filename = f'chat-{CHANNEL}-{datetime.now()}.log'
+    try:
+        while True:
+            resp = twitch.recv(4096).decode('utf-8')
 
-        if resp != "":
-            chatMsg = message.parseRawMsg(resp)
+            if resp:
+                print("\nGot message")
+                chatMsg = message.parseRawMsg(resp)
 
-            if verbose:
-                print(resp)
-                print(chatMsg)
+                if verbose:
+                    print(resp)
+                    # print(chatMsg)
 
-            # Handle twitch's keep alives
-            if resp == 'PING':
-                twitch.send('PONG ' + parsedMessage)
+                # Handle twitch's keep alives
+                if resp == 'PING':
+                    twitch.send('PONG ' + parsedMessage)
+                # Run if a command was requested
+                elif chatMsg and chatMsg['command']['command'] == "PRIVMSG":
+                    readCommand(chatMsg['command'])
 
-            # Run if a command was requested
-            elif chatMsg != None and chatMsg['command']['command'] == "PRIVMSG":
-                readCommand(chatMsg['command'])
+                    with open(filename, 'a') as chat:
+                        chat.write(resp + "\n")
+
+                print("Waiting for message...")
+        
+        resp = None
 
     # Catch all exceptions, if you constantly connect and disconnect Twitch thinks your DDoSing them.
-    # except Exception as e:
-    #     print("An unexpected error occurred.")
-    #     print("Error:")
-    #     print(e)
-    #     print("Would you like to keep running?")
-    #     userInput = input("(y/n): ")
-    #     if userInput.lower() == 'y':
-    #         print('Attempting to rerun. If this happens again you might want to check your commands json.')
-    #         running()
-    #     elif userInput.lower() == 'n':
-    #         print("Exiting...")
-    #     else:
-    #         print("Invalid input detected. Defaulting to no.")
-    #         print("Exiting...")
+    except Exception as e:
+        print("An unexpected error occurred.")
+        print("Error:")
+        print(e)
+        print("Would you like to keep running?")
+        userInput = input("(y/n): ")
+        if userInput.lower() == 'y':
+            print('Attempting to rerun. If this happens again you might want to check your commands json.')
+            running()
+        elif userInput.lower() == 'n':
+            print("Exiting...")
+        else:
+            print("Invalid input detected. Defaulting to no.")
+            print("Exiting...")
 
 def main(waitLength=1):
     try:
@@ -154,7 +164,11 @@ def main(waitLength=1):
 
 if __name__ == "__main__":
     global verbose
+    global logging
+
     verbose = True
+    logging = True
+
     try: 
         main()
     except KeyboardInterrupt:
