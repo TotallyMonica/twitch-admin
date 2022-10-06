@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 import socket
 import json
-import irc
 import threading
 import time
 import sys
 import os
 from datetime import datetime
+import traceback
 
 import parse.message as message
 #import parse.args as argparse
@@ -27,7 +27,7 @@ def init():
     PORT = 6667
     USERNAME = 'majoryoshibot'
     TOKEN = secrets['oauth']
-    CHANNEL = '#' + 'nico' #secrets['channel']
+    CHANNEL = '#' + 'dougdougw' #secrets['channel']
     PREFIX = secrets['prefix']
 
     # Connect with twitch
@@ -50,8 +50,8 @@ def sendMsg(msg, msgType="PRIVMSG"):
 
     if msgType == "PONG":
         formattedMsg = f'{msgType} :tmi.twitch.tv\n'
-    # else:
-    #     formattedMsg = f'{msgType} {CHANNEL} :{msg}\n'
+    else:
+        formattedMsg = f'{msgType} {CHANNEL} :{msg}\n'
 
     if verbose:
         print("Sending " + formattedMsg)
@@ -107,50 +107,61 @@ def readCommand(chatMsg):
         print(f"Received invalid command {chatMsg['botCommand']}")
 
 def running():
+    file = ""
 
-    if logging:
-        filename = f'chat-{CHANNEL}-{datetime.now()}.log'
-    try:
-        while True:
-            resp = twitch.recv(4096).decode('utf-8')
+    if file:
+        with open(file) as sim:
+            resp = sim.read()
+            print(f"\nSimulating message {resp}")
+            chatMsg = message.parseRawMsg(resp)
 
-            if resp:
-                print("\nGot message")
-                chatMsg = message.parseRawMsg(resp)
+            print(f"Friendly: {chatMsg}")
+            # Run if a command was requested
+            if chatMsg and chatMsg['command']['command'] == b"PRIVMSG":
+                print(chatMsg)
 
-                if verbose:
-                    print(resp)
-                    # print(chatMsg)
+    else:
+        if logging:
+            filename = f'chat-{CHANNEL}-{datetime.now()}.log'
 
-                # Handle twitch's keep alives
-                if resp == 'PING':
-                    twitch.send('PONG ' + parsedMessage)
-                # Run if a command was requested
-                elif chatMsg and chatMsg['command']['command'] == "PRIVMSG":
-                    readCommand(chatMsg['command'])
+        try:
+            while True:
+                resp = twitch.recv(2048).decode('utf-8')
 
-                    with open(filename, 'a') as chat:
-                        chat.write(resp + "\n")
+                if resp != b"":
+                    print("\nGot message")
+                    chatMsg = message.parseRawMsg(resp)
 
-                print("Waiting for message...")
-        
-        resp = None
+                    if verbose:
+                        print(resp)
+                        # print(chatMsg)
 
-    # Catch all exceptions, if you constantly connect and disconnect Twitch thinks your DDoSing them.
-    except Exception as e:
-        print("An unexpected error occurred.")
-        print("Error:")
-        print(e)
-        print("Would you like to keep running?")
-        userInput = input("(y/n): ")
-        if userInput.lower() == 'y':
-            print('Attempting to rerun. If this happens again you might want to check your commands json.')
-            running()
-        elif userInput.lower() == 'n':
-            print("Exiting...")
-        else:
-            print("Invalid input detected. Defaulting to no.")
-            print("Exiting...")
+                    # Run if a command was requested
+                    if chatMsg and chatMsg['command']['command'] == b"PRIVMSG":
+                        print(chatMsg['command'])
+
+                        with open(filename, 'a') as chat:
+                            chat.write(resp + "\n")
+
+                    print("Waiting for message...")
+            
+            resp = None
+
+        # Catch all exceptions, if you constantly connect and disconnect Twitch thinks your DDoSing them.
+        except Exception as e:
+            print("An unexpected error occurred.")
+            print("Error:")
+            traceback.print_exc()
+            print("Would you like to keep running?")
+            userInput = input("(y/n): ")
+            if userInput.lower() == 'y':
+                print('Attempting to rerun. If this happens again you might want to check your commands json.')
+                running()
+            elif userInput.lower() == 'n':
+                print("Exiting...")
+            else:
+                print("Invalid input detected. Defaulting to no.")
+                print("Exiting...")
 
 def main(waitLength=1):
     try:
