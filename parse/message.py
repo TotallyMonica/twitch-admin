@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 def parseRawMsg(rawMsg):
     ptr = 0
     parsedMessage = {  
@@ -15,10 +14,13 @@ def parseRawMsg(rawMsg):
     rawParams = None
 
     # Check if there are any tags provided
+    print(rawMsg)
+
     if rawMsg[0] == '@':
         endPointer = rawMsg.index(' ')
         rawTags = rawMsg[1:endPointer]
         ptr = endPointer + 1
+        print("Tags: " + rawTags)
 
     # Check for the source
     # If no source, it's a ping
@@ -30,19 +32,12 @@ def parseRawMsg(rawMsg):
     try:
         endPointer = rawMsg.index(":", ptr)
         rawCommand = rawMsg[ptr:endPointer].lstrip()
-
     except ValueError:
-        ptr = len(rawMsg)
+        endPointer = len(rawMsg)
 
     if endPointer != len(rawMsg):
         ptr = endPointer + 1
         rawParams = rawMsg[ptr:]
-
-#    print("\nRaw values:")
-#    print(f"\tTags: {rawTags}")
-#    print(f"\tSource: {rawSource}")
-#    print(f"\tCommand: {rawCommand}")
-#    print(f"\tParams: {rawParams} \n")
 
     if rawCommand == None:
         return None
