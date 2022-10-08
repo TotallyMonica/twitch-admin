@@ -112,7 +112,8 @@ def running():
 
     try:
         while True:
-            resp = twitch.recv(2048).decode('utf-8')
+            rawResp = twitch.recv(2048)
+            resp = rawResp.decode('utf-8')
 
             if len(resp) != 0:
                 print(f"\n{datetime.now()}: Got message")
