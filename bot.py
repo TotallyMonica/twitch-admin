@@ -27,7 +27,7 @@ def init():
     PORT = 6667
     USERNAME = 'majoryoshibot'
     TOKEN = secrets['oauth']
-    CHANNEL = '#' + 'dougdougw' #secrets['channel']
+    CHANNEL = f"#{secrets['channel']}"
     PREFIX = secrets['prefix']
 
     # Connect with twitch
@@ -38,7 +38,7 @@ def init():
     # Authenticate with twitch
     twitch.send(f'PASS {TOKEN}\n'.encode('utf-8'))
     print("Logged in with the oauth token")
-    twitch.send(f'CAP REQ :twitch.tv/tags twitch.tv/commands\n'.encode('utf-8'))
+    twitch.send(f'CAP REQ :twitch.tv/tags twitch.tv/membership twitch.tv/commands\n'.encode('utf-8'))
     print("Retrieved tags")
     twitch.send(f'NICK {USERNAME}\n'.encode('utf-8'))
     print(f"Username set to {USERNAME}")
@@ -107,61 +107,46 @@ def readCommand(chatMsg):
         print(f"Received invalid command {chatMsg['botCommand']}")
 
 def running():
-    file = ""
+    if logging:
+        filename = f'chat-{CHANNEL}-{datetime.now()}.log'
 
-    if file:
-        with open(file) as sim:
-            resp = sim.read()
-            print(f"\nSimulating message {resp}")
+    try:
+        while True:
+            resp = twitch.recv(2048).decode('utf-8')
+
+            print(f"\n{datetime.now()}: Got message")
             chatMsg = message.parseRawMsg(resp)
 
-            print(f"Friendly: {chatMsg}")
+            if verbose:
+                print(resp + "\n")
+                # print(chatMsg)
+
             # Run if a command was requested
-            if chatMsg and chatMsg['command']['command'] == b"PRIVMSG":
+            if chatMsg and chatMsg['command']['command'] == "PRIVMSG":
                 print(chatMsg)
+                print(chatMsg['command'])
 
-    else:
-        if logging:
-            filename = f'chat-{CHANNEL}-{datetime.now()}.log'
+                with open(filename, 'a') as chat:
+                    chat.write(resp + "\n")
 
-        try:
-            while True:
-                resp = twitch.recv(2048).decode('utf-8')
-
-                if resp != b"":
-                    print("\nGot message")
-                    chatMsg = message.parseRawMsg(resp)
-
-                    if verbose:
-                        print(resp)
-                        # print(chatMsg)
-
-                    # Run if a command was requested
-                    if chatMsg and chatMsg['command']['command'] == b"PRIVMSG":
-                        print(chatMsg['command'])
-
-                        with open(filename, 'a') as chat:
-                            chat.write(resp + "\n")
-
-                    print("Waiting for message...")
-            
+            print("Waiting for message...")
             resp = None
 
-        # Catch all exceptions, if you constantly connect and disconnect Twitch thinks your DDoSing them.
-        except Exception as e:
-            print("An unexpected error occurred.")
-            print("Error:")
-            traceback.print_exc()
-            print("Would you like to keep running?")
-            userInput = input("(y/n): ")
-            if userInput.lower() == 'y':
-                print('Attempting to rerun. If this happens again you might want to check your commands json.')
-                running()
-            elif userInput.lower() == 'n':
-                print("Exiting...")
-            else:
-                print("Invalid input detected. Defaulting to no.")
-                print("Exiting...")
+    # Catch all exceptions, if you constantly connect and disconnect Twitch thinks your DDoSing them.
+    except Exception as e:
+        print("An unexpected error occurred.")
+        print("Error:")
+        traceback.print_exc()
+        print("Would you like to keep running?")
+        userInput = input("(y/n): ")
+        if userInput.lower() == 'y':
+            print('Attempting to rerun. If this happens again you might want to check your commands json.')
+            running()
+        elif userInput.lower() == 'n':
+            print("Exiting...")
+        else:
+            print("Invalid input detected. Defaulting to no.")
+            print("Exiting...")
 
 def main(waitLength=1):
     try:

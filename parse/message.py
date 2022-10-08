@@ -14,13 +14,11 @@ def parseRawMsg(rawMsg):
     rawParams = None
 
     # Check if there are any tags provided
-    print(rawMsg)
 
     if rawMsg[0] == '@':
         endPointer = rawMsg.index(' ')
         rawTags = rawMsg[1:endPointer]
         ptr = endPointer + 1
-        print("Tags: " + rawTags)
 
     # Check for the source
     # If no source, it's a ping
