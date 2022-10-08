@@ -114,23 +114,27 @@ def running():
         while True:
             resp = twitch.recv(2048).decode('utf-8')
 
-            print(f"\n{datetime.now()}: Got message")
-            chatMsg = message.parseRawMsg(resp)
+            if len(resp) != 0:
+                print(f"\n{datetime.now()}: Got message")
+                chatMsg = message.parseRawMsg(resp)
 
-            if verbose:
-                print(resp + "\n")
-                # print(chatMsg)
+                if verbose:
+                    print(resp + "\n")
+                    # print(chatMsg)
 
-            # Run if a command was requested
-            if chatMsg and chatMsg['command']['command'] == "PRIVMSG":
-                print(chatMsg)
-                print(chatMsg['command'])
+                # Run if a command was requested
+                if chatMsg and chatMsg['command']['command'] == "PRIVMSG":
+                    print(chatMsg)
+                    print(chatMsg['command'])
 
-                with open(filename, 'a') as chat:
-                    chat.write(resp + "\n")
+                    with open(filename, 'a') as chat:
+                        chat.write(resp + "\n")
 
-            print("Waiting for message...")
-            resp = None
+                print("Waiting for message...")
+                resp = None
+
+            else:
+                print("Something broke. Put your break point here!")
 
     # Catch all exceptions, if you constantly connect and disconnect Twitch thinks your DDoSing them.
     except Exception as e:
