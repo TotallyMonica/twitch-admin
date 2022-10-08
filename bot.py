@@ -129,13 +129,17 @@ def running():
                     print(chatMsg['command'])
 
                     with open(filename, 'a') as chat:
-                        chat.write(resp + "\n")
+                        chat.write(f"{datetime.now()}: {resp}\n")
 
                 print("Waiting for message...")
                 resp = None
 
             else:
                 print("Something broke. Put your break point here!")
+                twitch.send(f'PART\n'.encode('utf-8'))
+                twitch.close()
+                time.sleep(5)
+                init()
 
     # Catch all exceptions, if you constantly connect and disconnect Twitch thinks your DDoSing them.
     except Exception as e:
