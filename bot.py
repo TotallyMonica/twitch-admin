@@ -11,7 +11,7 @@ import traceback
 import parse.message as message
 #import parse.args as argparse
 
-def init():
+def init(waitLength=1):
     global PREFIX
     global USERNAME
     global CHANNEL
@@ -25,25 +25,31 @@ def init():
     # Define login information
     SERVER = 'irc.chat.twitch.tv'
     PORT = 6667
-    USERNAME = 'majoryoshibot'
+    USERNAME = secrets['username']
     TOKEN = secrets['oauth']
     CHANNEL = f"#{secrets['channel']}"
     PREFIX = secrets['prefix']
 
+    try:
     # Connect with twitch
-    twitch = socket.socket()
-    twitch.connect((SERVER, PORT))
-    print("Connected to twitch")
+        twitch = socket.socket()
+        twitch.connect((SERVER, PORT))
+        print("Connected to twitch")
 
-    # Authenticate with twitch
-    twitch.send(f'PASS {TOKEN}\n'.encode('utf-8'))
-    print("Logged in with the oauth token")
-    twitch.send(f'CAP REQ :twitch.tv/tags twitch.tv/membership twitch.tv/commands\n'.encode('utf-8'))
-    print("Retrieved tags")
-    twitch.send(f'NICK {USERNAME}\n'.encode('utf-8'))
-    print(f"Username set to {USERNAME}")
-    twitch.send(f'JOIN {CHANNEL}\n'.encode('utf-8'))
-    print(f"Joined channel {CHANNEL}")
+        # Authenticate with twitch
+        twitch.send(f'PASS {TOKEN}\n'.encode('utf-8'))
+        print("Logged in with the oauth token")
+        twitch.send(f'CAP REQ :twitch.tv/tags twitch.tv/membership twitch.tv/commands\n'.encode('utf-8'))
+        print("Retrieved tags")
+        twitch.send(f'NICK {USERNAME}\n'.encode('utf-8'))
+        print(f"Username set to {USERNAME}")
+        twitch.send(f'JOIN {CHANNEL}\n'.encode('utf-8'))
+        print(f"Joined channel {CHANNEL}")
+
+    except ConnectionResetError:
+        print(f"Connection got reset, retrying in {waitLength} seconds...")
+        time.sleep(waitLength)
+        init(waitLength * 2)
 
 def sendMsg(msg, msgType="PRIVMSG"):
     msgType = msgType.upper()
@@ -157,15 +163,10 @@ def running():
             print("Invalid input detected. Defaulting to no.")
             print("Exiting...")
 
-def main(waitLength=1):
-    try:
-        init()
-        running()
-        twitch.close()
-    except ConnectionResetError:
-        print(f"Connection got reset, retrying in {waitLength} seconds...")
-        time.sleep(waitLength)
-        main(waitLength * 2)
+def main():
+    init()
+    running()
+    twitch.close()
 
 if __name__ == "__main__":
     global verbose
