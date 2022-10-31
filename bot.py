@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import socket
+import irc.bot
 import json
 import threading
 import time
@@ -27,8 +28,9 @@ def init(waitLength=1):
     PORT = 6667
     USERNAME = secrets['username']
     TOKEN = secrets['oauth']
-    CHANNEL = f"#{secrets['channel']}"
+    CHANNEL = f"#{secrets['channels'][0]}"
     PREFIX = secrets['prefix']
+    URL = 'https://api.twitch.tv/kraken/users?login=' + CHANNEL
 
     try:
     # Connect with twitch
