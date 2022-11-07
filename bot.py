@@ -151,6 +151,8 @@ def running():
 
             else:
                 print("Something broke. Put your break point here!")
+                print("Contents of what twitch gave: ")
+                print(bytes(resp))
                 twitch.send(f'PART\r\n'.encode('utf-8'))
                 twitch.close()
                 init(15)
