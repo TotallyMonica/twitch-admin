@@ -16,6 +16,8 @@ def init(waitLength=1):
     global CHANNEL
     global twitch
 
+    time.sleep(waitLength)
+
     with open("files/secrets.json", "r") as filp:
         secrets = json.load(filp)
 
@@ -46,9 +48,9 @@ def init(waitLength=1):
         print(f"Joined channel {CHANNEL}")
 
     except ConnectionResetError:
+        waitlength *= 2
         print(f"Connection got reset, retrying in {waitLength} seconds...")
-        time.sleep(waitLength)
-        init(waitLength * 2)
+        init(waitLength)
 
 def sendMsg(msg, msgType="PRIVMSG"):
     msgType = msgType.upper()
@@ -138,7 +140,7 @@ def running():
                     # print(chatMsg)
                     print(chatMsg['command'])
                     print(chatMsg['source'])
-                    print(chatMsg['contents'])
+                    print(f"{chatMsg['source']['nick'][1:]}: {chatMsg['contents']}")
                     print(chatMsg['parameters'])
 
                     with open(filename, 'a') as chat:
@@ -151,8 +153,7 @@ def running():
                 print("Something broke. Put your break point here!")
                 twitch.send(f'PART\r\n'.encode('utf-8'))
                 twitch.close()
-                time.sleep(5)
-                init()
+                init(15)
 
     # Catch all exceptions, if you constantly connect and disconnect Twitch thinks your DDoSing them.
     except Exception as e:
