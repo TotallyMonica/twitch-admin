@@ -9,7 +9,6 @@ from datetime import datetime
 import traceback
 
 import parse.message as message
-#import parse.args as argparse
 
 def init(waitLength=1):
     global PREFIX
@@ -37,13 +36,13 @@ def init(waitLength=1):
         print("Connected to twitch")
 
         # Authenticate with twitch
-        twitch.send(f'PASS {TOKEN}\n'.encode('utf-8'))
+        twitch.send(f'PASS {TOKEN}\r\n'.encode('utf-8'))
         print("Logged in with the oauth token")
-        twitch.send(f'CAP REQ :twitch.tv/tags twitch.tv/membership twitch.tv/commands\n'.encode('utf-8'))
+        twitch.send(f'CAP REQ :twitch.tv/tags twitch.tv/membership twitch.tv/commands\r\n'.encode('utf-8'))
         print("Retrieved tags")
-        twitch.send(f'NICK {USERNAME}\n'.encode('utf-8'))
+        twitch.send(f'NICK {USERNAME}\r\n'.encode('utf-8'))
         print(f"Username set to {USERNAME}")
-        twitch.send(f'JOIN {CHANNEL}\n'.encode('utf-8'))
+        twitch.send(f'JOIN {CHANNEL}\r\n'.encode('utf-8'))
         print(f"Joined channel {CHANNEL}")
 
     except ConnectionResetError:
@@ -55,9 +54,9 @@ def sendMsg(msg, msgType="PRIVMSG"):
     msgType = msgType.upper()
 
     if msgType == "PONG":
-        formattedMsg = f'{msgType} :tmi.twitch.tv\n'
+        formattedMsg = f'{msgType} :tmi.twitch.tv\r\n'
     else:
-        formattedMsg = f'{msgType} {CHANNEL} :{msg}\n'
+        formattedMsg = f'{msgType} {CHANNEL} :{msg}\r\n'
 
     if verbose:
         print("Sending " + formattedMsg)
@@ -112,27 +111,35 @@ def readCommand(chatMsg):
     elif verbose:
         print(f"Received invalid command {chatMsg['botCommand']}")
 
+# def chatContents(parsedChat):
+
+
 def running():
+    run = True
+
     if logging:
         filename = f'chat-{CHANNEL}-{datetime.now()}.log'
 
     try:
-        while True:
+        while run:
             rawResp = twitch.recv(2048)
             resp = rawResp.decode('utf-8')
 
             if len(resp) != 0:
-                print(f"\n{datetime.now()}: Got message")
+                # print(f"\n{datetime.now()}: Got message")
                 chatMsg = message.parseRawMsg(resp)
 
-                if verbose:
-                    print(resp + "\n")
-                    # print(chatMsg)
+                # if verbose:
+                #     print(resp + "\n")
+                #     print(chatMsg)
 
                 # Run if a command was requested
                 if chatMsg and chatMsg['command']['command'] == "PRIVMSG":
-                    print(chatMsg)
+                    # print(chatMsg)
                     print(chatMsg['command'])
+                    print(chatMsg['source'])
+                    print(chatMsg['contents'])
+                    print(chatMsg['parameters'])
 
                     with open(filename, 'a') as chat:
                         chat.write(f"{datetime.now()}: {resp}\n")
@@ -142,7 +149,7 @@ def running():
 
             else:
                 print("Something broke. Put your break point here!")
-                twitch.send(f'PART\n'.encode('utf-8'))
+                twitch.send(f'PART\r\n'.encode('utf-8'))
                 twitch.close()
                 time.sleep(5)
                 init()
@@ -159,6 +166,7 @@ def running():
             running()
         elif userInput.lower() == 'n':
             print("Exiting...")
+            twitch.send(f'PART\r\n'.encode('utf-8'))
         else:
             print("Invalid input detected. Defaulting to no.")
             print("Exiting...")

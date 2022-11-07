@@ -5,12 +5,14 @@ def parseRawMsg(rawMsg):
         "tags": None,
         "source": None,
         "command": None,
+        "contents": None,
         "parameters": None
     }
 
     rawTags = None
     rawSource = None
     rawCommand = None
+    rawContents = None
     rawParams = None
 
     # Check if there are any tags provided
@@ -36,6 +38,7 @@ def parseRawMsg(rawMsg):
     if endPointer != len(rawMsg):
         ptr = endPointer + 1
         rawParams = rawMsg[ptr:]
+        parsedMessage['contents'] = rawMsg[ptr:]
 
     if rawCommand == None:
         return None
