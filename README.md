@@ -71,3 +71,4 @@ chmod +x bot.py
 ## Known bugs
 
  * Seems to not like being in extremely active chats, unable to define what that means at the moment
+ * Ping play a part in the stability, but this has not yet been confirmed. Difficult to confirm since twitch doesn't respond to ping requests
