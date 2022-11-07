@@ -67,3 +67,7 @@ chmod +x bot.py
  * ~~Add commands~~ Done on September 19th, 2022
  * ~~Import commands from Json/CSV~~ Done on September 18th, 2022
  * First time startup for commands and secrets
+
+## Known bugs
+
+ * Seems to not like being in extremely active chats, unable to define what that means at the moment
