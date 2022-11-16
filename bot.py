@@ -1,23 +1,28 @@
 #!/usr/bin/env python3
+
+# Authentication libraries
+import irc.bot
+import requests
 import socket
+
+# Misc libraries
 import json
-import threading
 import time
-import sys
-import os
 from datetime import datetime
 import traceback
 
+# Custom Libraries
 import parse.message as message
 
-def init(waitLength=1):
+def login(waitLength=1):
+    # Set variables to global, probably unnecessary
     global PREFIX
     global USERNAME
     global CHANNEL
-    global twitch
 
     time.sleep(waitLength)
 
+    # Load secrets
     with open("files/secrets.json", "r") as filp:
         secrets = json.load(filp)
 
@@ -28,9 +33,16 @@ def init(waitLength=1):
     PORT = 6667
     USERNAME = secrets['username']
     TOKEN = secrets['oauth']
-    CHANNEL = f"#{secrets['channel']}"
+    CLIENT_ID = secrets['client_id']
+    CHANNEL = secrets['channel']
     PREFIX = secrets['prefix']
 
+    # Create the headers and body necessary for chat
+    keys = requests.post('https://id.twitch.tv/oauth2/token', body).json()
+    headers = {'Client-ID': client_id, 'Accept': 'application/vnd.twitchtv.v5+json'}
+
+
+def init(waitLength=1):
     try:
     # Connect with twitch
         twitch = socket.socket()
