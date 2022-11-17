@@ -17,7 +17,7 @@ Adaptation to Helix 2022 by TotallyMonica
 import irc.bot, requests, json, threading, time, sys
 
 class TwitchBot(irc.bot.SingleServerIRCBot):
-    def __init__(self, username, client_id, client_secret, token, channel, chat):
+    def __init__(self, username, client_id, client_secret, token, channel, chat=False):
         self.client_id = client_id
         self.client_secret = client_secret
         self.token = token.removeprefix("oauth:")
