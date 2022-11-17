@@ -14,7 +14,7 @@ Modifications 2021 by RikiRC
 Adaptation to Helix 2022 by TotallyMonica
 '''
 
-import sys, irc.bot, requests
+import irc.bot, requests, json
 
 class TwitchBot(irc.bot.SingleServerIRCBot):
     def __init__(self, username, client_id, client_secret, token, channel):
@@ -56,16 +56,16 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         c.cap('REQ', ':twitch.tv/commands')
         c.join(self.channel)
         print('Joined ' + self.channel)
-        #c.privmsg(self.channel, "Connected!")
+        # c.privmsg(self.channel, "Connected!")
 
     def on_pubmsg(self, c, e):
         # If a chat message starts with an exclamation point, try to run it as a command
         pointer = e.source.index('!')
         print(e.source[:pointer] + ': ' + e.arguments[0])
-        if e.arguments[0][:1] == '!':
-            cmd = e.arguments[0].split(' ')[0][1:]
-            print('Received command: ' + cmd)
-            #self.do_command(e, cmd)
+        # if e.arguments[0][:1] == '!':
+        #     cmd = e.arguments[0].split(' ')[0][1:]
+        #     print('Received command: ' + cmd)
+        #     self.do_command(e, cmd)
         return
 
     def do_command(self, e, cmd):
@@ -102,13 +102,10 @@ def main():
     #     print('Usage: twitchbot <username> <client id> <client secret> <token> <channel>')
     #     sys.exit(1)
 
-    username      = 'majoryoshi'
-    client_id     = 'lrfqgh59j6onzip5zfd79qrrxly8n7'
-    client_secret = '52upor16jn0cy9wld2dgak7hp21hdd'
-    token         = 'rcrr20sbylxndd2tncyo2uzl42ghii'
-    channel       = 'majoryoshi'
+    with open('secrets.json') as filp:
+        secrets = json.load(filp)
 
-    bot = TwitchBot(username, client_id, client_secret, token, channel)
+    bot = TwitchBot(secrets['username'], secrets['client_id'], secrets['client_secret'], secrets['token'], secrets['channel'])
     bot.start()
 
 if __name__ == "__main__":
