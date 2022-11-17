@@ -14,14 +14,15 @@ Modifications 2021 by RikiRC
 Adaptation to Helix 2022 by TotallyMonica
 '''
 
-import irc.bot, requests, json, threading
+import irc.bot, requests, json, threading, time, sys
 
 class TwitchBot(irc.bot.SingleServerIRCBot):
-    def __init__(self, username, client_id, client_secret, token, channel):
+    def __init__(self, username, client_id, client_secret, token, channel, chat):
         self.client_id = client_id
         self.client_secret = client_secret
         self.token = token.removeprefix("oauth:")
         self.channel = '#' + channel.lower()
+        self.chat = chat
 
         # Get the channel id, we will need this for v5 API calls
         body = {
@@ -61,11 +62,31 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
     def on_pubmsg(self, c, e):
         # If a chat message starts with an exclamation point, try to run it as a command
         pointer = e.source.index('!')
-        print(e.source + ': ' + e.arguments[0])
-        # if e.arguments[0][:1] == '!':
-        #     cmd = e.arguments[0].split(' ')[0][1:]
-        #     print('Received command: ' + cmd)
-        #     self.do_command(e, cmd)
+        author = e.source[:pointer]
+        channel = e.target[1:]
+        output = f'{author}@{channel}: {e.arguments[0]}'
+        
+        print(output)
+
+        if self.chat:
+            # Make chat readable for OBS
+            with open('chat.txt', 'a') as filp:
+                pointer = 0
+
+                for char in output:
+                    filp.write(char)
+                    pointer += 1
+
+                    if pointer == 30:
+                        pointer = 0
+                        filp.write('\n')
+                    
+                filp.write('\n')
+        
+        if e.arguments[0][:1] == '!':
+            cmd = e.arguments[0].split(' ')[0][1:]
+            print('Received command: ' + cmd)
+            self.do_command(e, cmd)
         return
 
     def do_command(self, e, cmd):
@@ -97,22 +118,68 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
         else:
             c.privmsg(self.channel, "Did not understand command: " + cmd)
 
-def main():
-    # if len(sys.argv) != 6:
-    #     print('Usage: twitchbot <username> <client id> <client secret> <token> <channel>')
-    #     sys.exit(1)
+def manageTextSize(length=25):
+    while True:
+        lines = []
 
+        # Load the chat file, each line as its own item
+        with open('chat.txt', 'r') as filp:
+            print(filp)
+
+            lines = filp.read().split('\n')
+            print(lines)
+        
+        # Determine if the chat needs to be cleaned up
+        if len(lines) > length:
+            newLines = lines[-length:]
+
+            # Write new purged chat
+            with open('chat.txt', 'w') as filp:
+                for line in newLines:
+                    pointer = 0
+                    filp.write(line)
+                    pointer += 1
+                    
+                    if pointer == 30:
+                        filp.write('\n')
+
+                    if not line == newLines[-1]:
+                        filp.write('\n')
+        time.sleep(0.1)
+
+
+def main():
+    # Load secrets
     with open('secrets.json') as filp:
         secrets = json.load(filp)
 
-    majorBot = TwitchBot(secrets['username'], secrets['client_id'], secrets['client_secret'], secrets['token'], 'katiepunch')
-    tygrBot = TwitchBot(secrets['username'], secrets['client_id'], secrets['client_secret'], secrets['token'], 'codemiko')
-    
-    majorThread = threading.Thread(target=majorBot, name='majorThread')
-    tygrThread = threading.Thread(target=tygrBot, name='tygrThread')
+    if '--chat' in sys.argv:
+        chat = True
+    else:
+        chat = False
 
+    # Clear out chat
+    with open('chat.txt', 'w') as filp:
+        filp.write("")
+    
+    print('Waiting 20 seconds to help prevent ratelimiting issues')
+    time.sleep(20)
+
+    # Initialize client 1
+    majorBot = TwitchBot(secrets['username'], secrets['client_id'], secrets['client_secret'], secrets['token'], 'alpharad')
+    majorThread = threading.Thread(target=majorBot.start, name='majorThread')
     majorThread.start()
-    tygrThread.join()
+
+    # Initialize client 2
+    time.sleep(20)
+    tygrBot = TwitchBot(secrets['username'], secrets['client_id'], secrets['client_secret'], secrets['token'], 'codemiko', chat)
+    tygrThread = threading.Thread(target=tygrBot.start, name='tygrThread')
+    tygrThread.start()
+
+    if chat:
+        # Ensure the chat doesn't get too long
+        cleanChatThread = threading.Thread(target=manageTextSize, name = 'cleanChatThread')
+        cleanChatThread.start()
 
 if __name__ == "__main__":
     main()
