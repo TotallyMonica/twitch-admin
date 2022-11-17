@@ -124,10 +124,7 @@ def manageTextSize(length=25):
 
         # Load the chat file, each line as its own item
         with open('chat.txt', 'r') as filp:
-            print(filp)
-
             lines = filp.read().split('\n')
-            print(lines)
         
         # Determine if the chat needs to be cleaned up
         if len(lines) > length:
@@ -166,15 +163,9 @@ def main():
     time.sleep(20)
 
     # Initialize client 1
-    majorBot = TwitchBot(secrets['username'], secrets['client_id'], secrets['client_secret'], secrets['token'], 'alpharad')
-    majorThread = threading.Thread(target=majorBot.start, name='majorThread')
-    majorThread.start()
-
-    # Initialize client 2
-    time.sleep(20)
-    tygrBot = TwitchBot(secrets['username'], secrets['client_id'], secrets['client_secret'], secrets['token'], 'codemiko', chat)
-    tygrThread = threading.Thread(target=tygrBot.start, name='tygrThread')
-    tygrThread.start()
+    chatBot = TwitchBot(secrets['username'], secrets['client_id'], secrets['client_secret'], secrets['token'], secrets['channel'])
+    chatThread = threading.Thread(target=chatBot.start, name='chatThread')
+    chatThread.start()
 
     if chat:
         # Ensure the chat doesn't get too long
