@@ -14,7 +14,7 @@ Modifications 2021 by RikiRC
 Adaptation to Helix 2022 by TotallyMonica
 '''
 
-import irc.bot, requests, json
+import irc.bot, requests, json, threading
 
 class TwitchBot(irc.bot.SingleServerIRCBot):
     def __init__(self, username, client_id, client_secret, token, channel):
@@ -61,7 +61,7 @@ class TwitchBot(irc.bot.SingleServerIRCBot):
     def on_pubmsg(self, c, e):
         # If a chat message starts with an exclamation point, try to run it as a command
         pointer = e.source.index('!')
-        print(e.source[:pointer] + ': ' + e.arguments[0])
+        print(e.source + ': ' + e.arguments[0])
         # if e.arguments[0][:1] == '!':
         #     cmd = e.arguments[0].split(' ')[0][1:]
         #     print('Received command: ' + cmd)
@@ -105,8 +105,14 @@ def main():
     with open('secrets.json') as filp:
         secrets = json.load(filp)
 
-    bot = TwitchBot(secrets['username'], secrets['client_id'], secrets['client_secret'], secrets['token'], secrets['channel'])
-    bot.start()
+    majorBot = TwitchBot(secrets['username'], secrets['client_id'], secrets['client_secret'], secrets['token'], 'katiepunch')
+    tygrBot = TwitchBot(secrets['username'], secrets['client_id'], secrets['client_secret'], secrets['token'], 'codemiko')
+    
+    majorThread = threading.Thread(target=majorBot, name='majorThread')
+    tygrThread = threading.Thread(target=tygrBot, name='tygrThread')
+
+    majorThread.start()
+    tygrThread.join()
 
 if __name__ == "__main__":
     main()
