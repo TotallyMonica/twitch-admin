@@ -133,3 +133,5 @@ files/*
 
 # Logs
 *.log
+
+timer.txt
