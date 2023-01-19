@@ -7,7 +7,7 @@ from timer.Timer import timer
 # Misc libraries
 import json
 import threading
-from os import system, name
+from os import system, name, getcwd
 
 def menu():
     while True:
@@ -45,7 +45,7 @@ def main():
     chatThread.start()
 
     # Initialize timer
-    timerThread = threading.Thread(target=timer, args=("2:00"), daemon=True)
+    timerThread = threading.Thread(target=timer, args=("2:00", "It's start time!" f'{getcwd()}/timer.txt'), daemon=True)
     timerThread.start()
 
     menu()
