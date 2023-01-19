@@ -13,10 +13,10 @@ HOURS = 3600
 DAYS = 86400
 WEEKS = DAYS * 7
 
-def timer(time, finish="", file=True):
+def timer(time, finish="", file="timer.txt"):
     # Clear out file
     if file:
-        with open('timer.txt', 'w') as filp:
+        with open(file, 'w') as filp:
             filp.write("")
     
     # Determine how many different positions there are
@@ -36,7 +36,7 @@ def timer(time, finish="", file=True):
     
     # Convert all integers that are currently strings to integers
     for i in range(len(splitTime)):
-        if splitTime[i] and splitTime.isdigit():
+        if splitTime[i] and splitTime[i].isdigit():
             splitTime[i] = int(splitTime[i])
 
     # Convert all the times to seconds
@@ -77,7 +77,7 @@ def timer(time, finish="", file=True):
         # Print the friendly string and write to file
         print(friendlyTime)
         if file:
-            with open('timer.txt', 'w') as filp:
+            with open(file, 'w') as filp:
                 filp.write(friendlyTime)
         
         # Subtract 1 from manipSeconds, and wait a second
@@ -88,7 +88,7 @@ def timer(time, finish="", file=True):
     return finish
 
 def main():
-    countdown = '5'
+    countdown = sys.argv[1]
     print(timer(countdown))
 
 if __name__ == '__main__':
