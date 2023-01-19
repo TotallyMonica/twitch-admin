@@ -14,7 +14,7 @@ Modifications 2021 by RikiRC
 Adaptation to Helix 2022 by TotallyMonica
 '''
 
-import irc.bot, requests, json, threading, time, sys
+import irc.bot, requests, json, threading, time, sys, os
 
 class TwitchBot(irc.bot.SingleServerIRCBot):
     def __init__(self, username, client_id, client_secret, token, channel, chat=False):
