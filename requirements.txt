@@ -12,7 +12,7 @@ jaraco.logging==3.1.2
 jaraco.stream==3.0.3
 jaraco.text==3.9.1
 more-itertools==8.14.0
-pydantic==1.10.2
+pydantic==2.4.0
 pytz==2022.2.1
 requests==2.28.1
 tempora==5.0.2
