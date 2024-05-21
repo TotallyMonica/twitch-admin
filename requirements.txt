@@ -14,7 +14,7 @@ jaraco.text==3.9.1
 more-itertools==8.14.0
 pydantic==1.10.2
 pytz==2022.2.1
-requests==2.28.1
+requests==2.32.0
 tempora==5.0.2
 typing_extensions==4.3.0
 urllib3==1.26.12
